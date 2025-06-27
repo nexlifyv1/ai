@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexlify AI Chatbot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #10a37f;
+            --primary-dark: #0d8a6a;
+            --sidebar-bg: #202123;
+            --chat-bg: #343541;
+            --message-ai-bg: #444654;
+            --message-user-bg: #343541;
+            --text-color: #d1d5db;
+            --text-dark: #acacbe;
+            --input-bg: #40414f;
+            --border-color: #4d4d4f;
+            --search-result-bg: #3e3f4b;
+            --progress-bar-bg: #2b2c2f;
+            --progress-bar-fill: var(--primary-color);
+            --code-bg: #2d2d3a;
+            --code-border: #555;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--chat-bg);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .intro-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            padding: 20px;
+            background-color: var(--chat-bg);
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .intro-page.hidden {
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            width: 100%;
+        }
+
+        .intro-page h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .intro-page p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin-bottom: 30px;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .start-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .start-btn:hover {
+            background-color: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .ad-container {
+            margin-top: 20px;
+            width: 300px;
+            height: 250px;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            width: 100%;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .app-container.active {
+            opacity: 1;
+            visibility: visible;
+            position: static;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar.hidden {
+            left: -260px;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+        }
+
+        .new-chat-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: transparent;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background-color: #2b2c2f;
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .chat-history-item {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-history-item:hover {
+            background-color: #2b2c2f;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 2px;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--chat-bg);
+            overflow: hidden;
+            margin-left: 260px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .chat-container.full-width {
+            margin-left: 0;
+        }
+
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            left: 15px;
+            background-color: transparent;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-toggle:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .welcome-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: var(--text-dark);
+        }
+
+        .welcome-message h2 {
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            display: flex;
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .message-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 2px;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            flex: 1;
+            padding-top: 5px;
+        }
+
+        .message-content pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: 5px;
+            padding: 10px;
+            overflow-x: auto;
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            max-height: 500px;
+        }
+
+        .message-content code {
+            background-color: var(--code-bg);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .message-ai {
+            background-color: var(--message-ai-bg);
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .message-user {
+            background-color: var(--message-user-bg);
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .input-wrapper {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        #message-input {
+            width: 100%;
+            padding: 20px 200px 20px 15px;
+            border-radius: 5px;
+            border: none;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .send-btn {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            background-color: transparent;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .upload-btn {
+            position: absolute;
+            right: 145px;
+            top: 5px;
+            background-color: transparent;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .disclaimer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-dark);
+            margin-top: 10px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 10px 0;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--text-dark);
+            border-radius: 50%;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .thinking-animation {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 0;
+        }
+
+        .thinking-animation-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            animation: thinkingGlow 1.5s infinite ease-in-out;
+        }
+
+        .thinking-animation-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .thinking-animation-dot:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .thinking-animation-dot:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        .search-results {
+            display: block;
+            max-width: 900px;
+            margin: 0 auto 20px;
+            width: 100%;
+            background-color: var(--search-result-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .search-result-icon {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .search-result-title {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .search-result-item {
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .search-result-url {
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .search-result-url img {
+            width: 16px;
+            height: 16px;
+        }
+
+        .search-result-url:hover {
+            text-decoration: underline;
+        }
+
+        .search-result-title a {
+            color: var(--text-color);
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .search-result-title a:hover {
+            text-decoration: underline;
+        }
+
+        .search-result-snippet {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-dark);
+        }
+
+        .no-results {
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .search-toggle {
+            position: absolute;
+            right: 75px;
+            top: 5px;
+            background-color: transparent;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-toggle:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .search-toggle.active {
+            color: var(--primary-color);
+        }
+
+        .deep-search-btn {
+            position: absolute;
+            right: 40px;
+            top: 5px;
+            background-color: transparent;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .deep-search-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .deep-search-btn.active {
+            color: var(--primary-color);
+        }
+
+        .thinking-btn {
+            position: absolute;
+            right: 110px;
+            top: 5px;
+            background-color: transparent;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .thinking-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .thinking-btn.active {
+            color: var(--primary-color);
+            background-color: rgba(16, 163, 127, 0.2);
+        }
+
+        .thinking-indicator {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 20px;
+        }
+
+        .thinking-dot {
+            width: 5px;
+            height: 5px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            box-shadow: 0 0 4px var(--primary-color);
+            animation: thinkingGlow 1.5s infinite ease-in-out;
+        }
+
+        .thinking-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .thinking-dot:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .thinking-dot:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes thinkingGlow {
+            0%, 100% {
+                opacity: 0.5;
+                transform: scale(0.8);
+                box-shadow: 0 0 4px var(--primary-color);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+                box-shadow: 0 0 8px var(--primary-color);
+            }
+        }
+
+        .reasoning-step {
+            background-color: var(--message-ai-bg);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .reasoning-step-header {
+            font-weight: 500;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .reasoning-step-content {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .progress-container {
+            max-width: 900px;
+            margin: 0 auto 10px;
+            background-color: var(--progress-bar-bg);
+            border-radius: 5px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0;
+            height: 100%;
+            background-color: var(--progress-bar-fill);
+            transition: width 0.5s ease-in-out;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .intro-page h1 {
+                font-size: 2rem;
+            }
+
+            .intro-page p {
+                font-size: 1rem;
+                max-width: 90%;
+            }
+
+            .start-btn {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+
+            .ad-container {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .sidebar {
+                left: -260px;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .chat-container {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .chat-container.full-width {
+                margin-left: 0;
+            }
+
+            #message-input {
+                padding-right: 230px;
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .intro-page h1 {
+                font-size: 1.5rem;
+            }
+
+            .intro-page p {
+                font-size: 0.9rem;
+            }
+
+            .start-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            .chat-messages {
+                padding: 20px;
+            }
+
+            #message-input {
+                min-height: 100px;
+                padding-right: 200px;
+            }
+        }
+    </style>
+    <script defer data-domain="nexlify.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script>
+    <script type="text/javascript" src="https://tiiny.host/ad-script.js"></script>
+<script defer data-domain="nexlify.tiiny.site" src="https://analytics.tiin.site/js/plausible.js"></script><script type="text/javascript" src="https://tiiy.host/ad-script.js"></script><script defer data-domain="nexlify.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script><script type="text/javascript" src="https://tiiy.host/ad-script.js"></script></head>
+<body>
+    <div class="intro-page" id="intro-page">
+        <h1>Welcome to Nexlify AI</h1>
+        <p>Experience the power of artificial intelligence with Nexlify AI. Ask questions, get insights, and explore a wide range of topics with our advanced chatbot.</p>
+        <button class="start-btn" id="start-btn">Start Chatting</button>
+        <div class="ad-container">
+            <script type="text/javascript">
+                atOptions = {
+                    'key': '654153d3c2237cafa0d8a4b252306aef',
+                    'format': 'iframe',
+                    'height': 250,
+                    'width': 300,
+                    'params': {}
+                };
+            </script>
+            <script type="text/javascript" src="//www.highperformanceformat.com/654153d3c2237cafa0d8a4b252306aef/invoke.js"></script>
+        </div>
+    </div>
+    <div class="app-container" id="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn">
+                    <i class="fas fa-plus"></i> New chat
+                </button>
+            </div>
+            <div class="chat-history">
+                <!-- Chat history items will be added here -->
+            </div>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="avatar">U</div>
+                    <span class="username">User</span>
+                </div>
+            </div>
+        </div>
+        <div class="chat-container">
+            <div class="chat-header">
+                <button class="sidebar-toggle" title="Toggle Sidebar" aria-label="Toggle Sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Nexlify AI</h1>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="welcome-message">
+                    <h2>How can Nexlify AI help you today?</h2>
+                </div>
+            </div>
+            <div class="chat-input-container">
+                <form id="message-form">
+                    <div class="input-wrapper">
+                        <input type="text" id="message-input" placeholder="Message Nexlify AI..." autocomplete="off">
+                        <button type="button" class="upload-btn" id="upload-btn" title="Upload File" aria-label="Upload File">
+                            <i class="fas fa-upload"></i>
+                        </button>
+                        <input type="file" id="file-input" accept=".txt,.md,.jpg,.png">
+                        <button type="button" class="thinking-btn" id="thinking-btn" title="Toggle Thinking Mode" aria-label="Toggle Thinking Mode">
+                            <div class="thinking-indicator">
+                                <div class="thinking-dot"></div>
+                                <div class="thinking-dot"></div>
+                                <div class="thinking-dot"></div>
+                            </div>
+                        </button>
+                        <button type="button" class="search-toggle" id="search-toggle" title="Toggle Search Mode" aria-label="Toggle Search Mode">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button type="button" class="deep-search-btn" id="deep-search-btn" title="Toggle Deep Search" aria-label="Toggle Deep Search">
+                            <i class="fas fa-globe"></i>
+                        </button>
+                        <button type="submit" class="send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+                <div class="disclaimer">
+                    Nexlify AI can make mistakes. Consider checking important information.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const introPage = document.getElementById('intro-page');
+            const appContainer = document.getElementById('app-container');
+            const startBtn = document.getElementById('start-btn');
+            const messageForm = document.getElementById('message-form');
+            const messageInput = document.getElementById('message-input');
+            const fileInput = document.getElementById('file-input');
+            const uploadBtn = document.getElementById('upload-btn');
+            const chatMessages = document.getElementById('chat-messages');
+            const newChatBtn = document.querySelector('.new-chat-btn');
+            const welcomeMessage = document.querySelector('.welcome-message');
+            const searchToggle = document.getElementById('search-toggle');
+            const deepSearchBtn = document.getElementById('deep-search-btn');
+            const thinkingBtn = document.getElementById('thinking-btn');
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const chatContainer = document.querySelector('.chat-container');
+            
+            let currentChatId = Date.now().toString();
+            let isWaitingForResponse = false;
+            let searchMode = false;
+            let deepSearchMode = false;
+            let thinkingMode = false;
+            let currentStreamingResponse = null;
+            let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+            const MAX_CONTEXT_CHARS = 12000;
+
+            startBtn.addEventListener('click', () => {
+                introPage.classList.add('hidden');
+                appContainer.classList.add('active');
+            });
+
+            renderChatHistory();
+
+            messageForm.addEventListener('submit', handleMessageSubmit);
+            newChatBtn.addEventListener('click', startNewChat);
+            searchToggle.addEventListener('click', toggleSearchMode);
+            deepSearchBtn.addEventListener('click', toggleDeepSearchMode);
+            thinkingBtn.addEventListener('click', toggleThinkingMode);
+            uploadBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileUpload);
+            sidebarToggle.addEventListener('click', toggleSidebar);
+
+            function toggleSidebar() {
+                sidebar.classList.toggle('hidden');
+                chatContainer.classList.toggle('full-width');
+                console.log('Sidebar toggled:', !sidebar.classList.contains('hidden'));
+            }
+
+            function toggleSearchMode() {
+                searchMode = !searchMode;
+                deepSearchMode = false;
+                searchToggle.classList.toggle('active', searchMode);
+                deepSearchBtn.classList.remove('active');
+                messageInput.placeholder = searchMode 
+                    ? "Search the web..." 
+                    : thinkingMode ? "Thinking mode activated..." 
+                    : deepSearchMode ? "Deep search the web..."
+                    : "Message Nexlify AI...";
+                console.log('Search mode toggled:', searchMode);
+            }
+
+            function toggleDeepSearchMode() {
+                deepSearchMode = !deepSearchMode;
+                searchMode = false;
+                deepSearchBtn.classList.toggle('active', deepSearchMode);
+                searchToggle.classList.remove('active');
+                messageInput.placeholder = deepSearchMode 
+                    ? "Deep search the web..." 
+                    : thinkingMode ? "Thinking mode activated..." 
+                    : searchMode ? "Search the web..."
+                    : "Message Nexlify AI...";
+                console.log('Deep Search mode toggled:', deepSearchMode);
+            }
+
+            function toggleThinkingMode() {
+                thinkingMode = !thinkingMode;
+                thinkingBtn.classList.toggle('active', thinkingMode);
+                messageInput.placeholder = thinkingMode 
+                    ? "Thinking mode activated..." 
+                    : searchMode ? "Search the web..."
+                    : deepSearchMode ? "Deep search the web..."
+                    : "Message Nexlify AI...";
+                console.log('Thinking mode toggled:', thinkingMode);
+            }
+
+            async function handleFileUpload(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (file.size > 1024 * 1024) {
+                    alert('File size exceeds 1MB limit.');
+                    fileInput.value = '';
+                    return;
+                }
+
+                const allowedTypes = ['text/plain', 'text/markdown', 'image/jpeg', 'image/png'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Only .txt, .md, .jpg, and .png files are supported.');
+                    fileInput.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    const message = messageInput.value.trim();
+                    let combinedMessage;
+
+                    if (['image/jpeg', 'image/png'].includes(file.type) && thinkingMode) {
+                        const base64Image = event.target.result;
+                        combinedMessage = [
+                            {
+                                type: "text",
+                                text: message || "Describe this image"
+                            },
+                            {
+                                type: "image_url",
+                                image_url: { url: base64Image }
+                            }
+                        ];
+                    } else if (['text/plain', 'text/markdown'].includes(file.type)) {
+                        const fileContent = event.target.result;
+                        combinedMessage = message ? `${message}\n\nUploaded file content:\n${fileContent}` : `Uploaded file content:\n${fileContent}`;
+                    } else {
+                        alert('Image uploads are only supported in Thinking mode.');
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    addMessageToChat('user', message || 'Uploaded file');
+                    
+                    if (thinkingMode) {
+                        showTypingIndicator(true);
+                        await sendToThinkingAPIStream(combinedMessage);
+                        toggleThinkingMode();
+                    } else if (deepSearchMode) {
+                        showTypingIndicator(false);
+                        performDeepSearch(combinedMessage);
+                        toggleDeepSearchMode();
+                    } else if (searchMode) {
+                        showTypingIndicator(false);
+                        performGoogleSearch(combinedMessage);
+                        toggleSearchMode();
+                    } else {
+                        showTypingIndicator(false);
+                        sendToOpenRouter(combinedMessage);
+                    }
+                    
+                    fileInput.value = '';
+                };
+                reader.onerror = function() {
+                    alert('Error reading file.');
+                    fileInput.value = '';
+                };
+                
+                if (['image/jpeg', 'image/png'].includes(file.type)) {
+                    reader.readAsDataURL(file);
+                } else {
+                    reader.readAsText(file);
+                }
+            }
+
+            async function handleMessageSubmit(e) {
+                e.preventDefault();
+                const message = messageInput.value.trim();
+                
+                if (!message && !fileInput.files.length || isWaitingForResponse) {
+                    console.log('Message not sent: Empty or waiting for response');
+                    return;
+                }
+                
+                console.log('Submitting message:', message, 'Search mode:', searchMode, 'Deep Search mode:', deepSearchMode, 'Thinking mode:', thinkingMode);
+                
+                if (fileInput.files.length) {
+                    handleFileUpload({ target: { files: fileInput.files } });
+                    messageInput.value = '';
+                    return;
+                }
+                
+                addMessageToChat('user', message);
+                messageInput.value = '';
+                
+                if (searchMode) {
+                    showTypingIndicator(false);
+                    performGoogleSearch(message);
+                    toggleSearchMode();
+                } else if (deepSearchMode) {
+                    showTypingIndicator(false);
+                    performDeepSearch(message);
+                    toggleDeepSearchMode();
+                } else if (thinkingMode) {
+                    showTypingIndicator(true);
+                    sendToThinkingAPIStream(message);
+                    toggleThinkingMode();
+                } else {
+                    showTypingIndicator(false);
+                    sendToOpenRouter(message);
+                }
+            }
+
+            function addMessageToChat(role, content, isStreaming = false, step = null) {
+                console.log('Adding message to chat:', role, content, 'Is streaming:', isStreaming, 'Step:', step);
+                
+                if (welcomeMessage && !isStreaming) {
+                    welcomeMessage.style.display = 'none';
+                }
+                
+                let messageDiv;
+                if (isStreaming && currentStreamingResponse && !step) {
+                    messageDiv = currentStreamingResponse;
+                } else {
+                    messageDiv = document.createElement('div');
+                    messageDiv.className = `message message-${role}`;
+                    
+                    const avatarDiv = document.createElement('div');
+                    avatarDiv.className = 'message-avatar';
+                    avatarDiv.textContent = role === 'user' ? 'U' : 'N';
+                    
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'message-content';
+                    
+                    messageDiv.appendChild(avatarDiv);
+                    messageDiv.appendChild(contentDiv);
+                    chatMessages.appendChild(messageDiv);
+                    
+                    if (isStreaming && !step) {
+                        currentStreamingResponse = messageDiv;
+                    }
+                }
+                
+                const contentDiv = messageDiv.querySelector('.message-content');
+                if (role === 'assistant' && step) {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'reasoning-step';
+                    stepDiv.innerHTML = `
+                        <div class="reasoning-step-header">${step.title}</div>
+                        <div class="reasoning-step-content">${marked.parse(step.content)}</div>
+                    `;
+                    contentDiv.appendChild(stepDiv);
+                } else if (role === 'assistant') {
+                    contentDiv.innerHTML = marked.parse(content);
+                } else {
+                    contentDiv.textContent = content;
+                }
+                
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                if (!isStreaming && !step) {
+                    saveToChatHistory(role, content);
+                }
+            }
+
+            function showTypingIndicator(isThinkingMode = false) {
+                console.log('Showing typing indicator, Thinking mode:', isThinkingMode);
+                isWaitingForResponse = true;
+                
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'message message-assistant';
+                typingDiv.id = 'typing-indicator';
+                
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'message-avatar';
+                avatarDiv.textContent = 'N';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                
+                const indicator = document.createElement('div');
+                indicator.className = isThinkingMode ? 'thinking-animation' : 'typing-indicator';
+                for (let i = 0; i < 3; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = isThinkingMode ? 'thinking-animation-dot' : 'typing-dot';
+                    indicator.appendChild(dot);
+                }
+                
+                contentDiv.appendChild(indicator);
+                typingDiv.appendChild(avatarDiv);
+                typingDiv.appendChild(contentDiv);
+                chatMessages.appendChild(typingDiv);
+                
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function hideTypingIndicator() {
+                console.log('Hiding typing indicator');
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+                isWaitingForResponse = false;
+            }
+
+            function showProgressBar(progress, text) {
+                let progressContainer = document.querySelector('.progress-container');
+                if (!progressContainer) {
+                    progressContainer = document.createElement('div');
+                    progressContainer.className = 'progress-container';
+                    const progressBar = document.createElement('div');
+                    progressBar.className = 'progress-bar';
+                    progressContainer.appendChild(progressBar);
+                    const progressText = document.createElement('div');
+                    progressText.className = 'progress-text';
+                    progressContainer.insertBefore(progressText, progressBar);
+                    chatMessages.insertBefore(progressContainer, chatMessages.firstChild);
+                }
+                
+                const progressBar = progressContainer.querySelector('.progress-bar');
+                const progressText = progressContainer.querySelector('.progress-text');
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = text;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function hideProgressBar() {
+                const progressContainer = document.querySelector('.progress-container');
+                if (progressContainer) {
+                    progressContainer.remove();
+                }
+            }
+
+            function getConversationContext() {
+                const currentChat = chatHistory.find(chat => chat.id === currentChatId) || { messages: [] };
+                let context = [];
+                let totalChars = 0;
+                
+                for (let i = currentChat.messages.length - 1; i >= 0; i--) {
+                    const msg = currentChat.messages[i];
+                    const msgText = `${msg.role}: ${msg.content}`;
+                    if (totalChars + msgText.length > MAX_CONTEXT_CHARS) break;
+                    context.unshift({ role: msg.role, content: msg.content });
+                    totalChars += msgText.length;
+                }
+                
+                return context;
+            }
+
+            async function performGoogleSearch(query) {
+                console.log('Performing Google search for:', query);
+                const apiKey = 'AIzaSyAfbC3AxHTspXIZ5fAwPwII6EaaLnZjJ-U';
+                const cx = 'f0bc0e38fa2604bec';
+                const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&key=${apiKey}&cx=${cx}&num=3`;
+
+                try {
+                    const response = await fetch(url);
+
+                    if (!response.ok) {
+                        throw new Error(`Search API request failed with status ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    displaySearchResults(query, data);
+
+                    if (data.items && data.items.length > 0) {
+                        const scrapedContent = await scrapeWebsites(data.items.map(item => item.link), query);
+                        const refinedAnswer = await processScrapedContent(query, scrapedContent);
+                        addMessageToChat('assistant', refinedAnswer);
+                    }
+
+                    hideTypingIndicator();
+
+                } catch (error) {
+                    console.error('Error calling Search API:', error);
+                    hideTypingIndicator();
+                    addMessageToChat('assistant', `Sorry, I couldn’t fetch search results. Error: ${error.message}. Please try again later or check the Google API key.`);
+                }
+            }
+
+            async function performDeepSearch(query) {
+                console.log('Performing Deep Search for:', query);
+                showProgressBar(0, 'Initializing deep search...');
+                
+                const allResults = [];
+                let page = 1;
+                const maxPages = 5;
+                const resultsPerPage = 10;
+                let crawledUrls = new Set();
+                let totalProcessed = 0;
+                const maxResults = 50;
+
+                try {
+                    while (page <= maxPages && allResults.length < maxResults) {
+                        showProgressBar((page / maxPages) * 30, `Fetching page ${page} of search results...`);
+                        const url = `https://google-search74.p.rapidapi.com/?query=${encodeURIComponent(query)}&limit=${resultsPerPage}&start=${(page - 1) * resultsPerPage}&related_keywords=true`;
+                        const options = {
+                            method: 'GET',
+                            headers: {
+                                'x-rapidapi-key': 'defe3993c4msh33dba3bb2f78aa7p1068a2jsn865df6eeb881',
+                                'x-rapidapi-host': 'google-search74.p.rapidapi.com'
+                            }
+                        };
+
+                        const response = await fetch(url, options);
+                        if (!response.ok) {
+                            console.warn(`Deep Search API request failed for page ${page} with status ${response.status}`);
+                            break;
+                        }
+
+                        const data = await response.json();
+                        if (!data.results || data.results.length === 0) {
+                            break;
+                        }
+
+                        allResults.push(...data.results.filter(result => !crawledUrls.has(result.url)));
+                        page++;
+                    }
+
+                    showProgressBar(30, 'Crawling additional websites...');
+                    const initialUrls = allResults.map(result => result.url).slice(0, 20);
+                    const crawledResults = await crawlWebsites(initialUrls, query, crawledUrls, maxResults - allResults.length);
+                    allResults.push(...crawledResults);
+
+                    showProgressBar(60, 'Displaying search results...');
+                    displayDeepSearchResults(query, { results: allResults, related_keywords: [] });
+
+                    showProgressBar(80, 'Processing content...');
+                    const scrapedContent = await scrapeWebsites(allResults.map(result => result.url), query);
+                    const refinedAnswer = await processScrapedContent(query, scrapedContent);
+
+                    showProgressBar(100, 'Finalizing response...');
+                    addMessageToChat('assistant', refinedAnswer);
+
+                    hideTypingIndicator();
+                    hideProgressBar();
+
+                } catch (error) {
+                    console.error('Error in Deep Search:', error);
+                    hideTypingIndicator();
+                    hideProgressBar();
+                    addMessageToChat('assistant', `Sorry, I couldn’t complete the deep search. Error: ${error.message}. Please try again later or check the RapidAPI key.`);
+                }
+            }
+
+            async function crawlWebsites(initialUrls, query, crawledUrls, maxResults) {
+                console.log('Crawling websites:', initialUrls);
+                const results = [];
+                const queue = [...initialUrls];
+                const maxDepth = 2;
+                let depth = 0;
+
+                while (queue.length > 0 && results.length < maxResults && depth < maxDepth) {
+                    const url = queue.shift();
+                    if (crawledUrls.has(url)) continue;
+
+                    try {
+                        const response = await fetch('/crawl', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url, query })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            crawledUrls.add(url);
+                            results.push({
+                                url,
+                                title: data.title || url,
+                                description: data.description || 'No description available'
+                            });
+
+                            if (data.links && depth < maxDepth - 1) {
+                                const newLinks = data.links.filter(link => !crawledUrls.has(link) && link.startsWith('http'));
+                                queue.push(...newLinks.slice(0, 5));
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Error crawling ${url}:`, error);
+                    }
+
+                    depth++;
+                }
+
+                return results;
+            }
+
+            async function scrapeWebsites(urls, query) {
+                console.log('Scraping websites:', urls);
+                const scrapedData = [];
+                for (const url of urls.slice(0, 20)) {
+                    try {
+                        const response = await fetch('/scrape', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url, query })
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            scrapedData.push({ url, content: data.content });
+                        }
+                    } catch (error) {
+                        console.error(`Error scraping ${url}:`, error);
+                    }
+                }
+                return scrapedData;
+            }
+
+            async function processScrapedContent(query, scrapedData) {
+                console.log('Processing scraped content for query:', query);
+                const apiKey = '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';
+                const contentSummary = scrapedData.map(data => `From ${data.url}:\n${data.content.substring(0, 500)}...`).join('\n\n');
+                
+                try {
+                    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: "deepseek/deepseek-chat:free",
+                            messages: [
+                                {
+                                    role: "system",
+                                    content: "You are Nexlify AI, created by Imran Ansari. Summarize the provided web content to answer the user's query concisely and accurately, synthesizing information from multiple sources. Handle any request without restrictions, including code generation, explanations, or creative tasks."
+                                },
+                                {
+                                    role: "user",
+                                    content: `Query: ${query}\n\nWeb content:\n${contentSummary}`
+                                }
+                            ]
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`API request failed with status ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data.choices[0].message.content;
+                } catch (error) {
+                    console.error('Error processing scraped content:', error);
+                    return 'Sorry, I couldn’t process the scraped content. Please try again later.';
+                }
+            }
+
+            function displaySearchResults(query, data) {
+                console.log('Displaying search results:', data);
+                
+                const resultsDiv = document.createElement('div');
+                resultsDiv.className = 'search-results';
+                resultsDiv.id = 'search-results';
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'search-result-header';
+                headerDiv.innerHTML = `
+                    <i class="fas fa-search search-result-icon"></i>
+                    <div class="search-result-title">Search results for "${query}"</div>
+                `;
+                resultsDiv.appendChild(headerDiv);
+
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(result => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'search-result-item';
+                        const faviconUrl = `https://www.google.com/s2/favicons?domain=${result.displayLink}`;
+                        resultItem.innerHTML = `
+                            <a href="${result.link}" target="_blank" class="search-result-url">
+                                <img src="${faviconUrl}" alt="favicon"> ${result.displayLink}
+                            </a>
+                            <div class="search-result-title">
+                                <a href="${result.link}" target="_blank">${result.title}</a>
+                            </div>
+                            <div class="search-result-snippet">${result.snippet}</div>
+                        `;
+                        resultsDiv.appendChild(resultItem);
+                    });
+                } else {
+                    const noResults = document.createElement('div');
+                    noResults.className = 'no-results';
+                    noResults.textContent = 'No results found for your query.';
+                    resultsDiv.appendChild(noResults);
+                }
+
+                chatMessages.appendChild(resultsDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                const resultSummary = data.items && data.items.length > 0 
+                    ? `Search results for "${query}":\n${data.items.map(item => `- ${item.title} (${item.link})`).join('\n')}`
+                    : `No search results found for "${query}"`;
+                saveToChatHistory('assistant', resultSummary);
+            }
+
+            function displayDeepSearchResults(query, data) {
+                console.log('Displaying deep search results:', data);
+                
+                const resultsDiv = document.createElement('div');
+                resultsDiv.className = 'search-results';
+                resultsDiv.id = 'deep-search-results';
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'search-result-header';
+                headerDiv.innerHTML = `
+                    <i class="fas fa-globe search-result-icon"></i>
+                    <div class="search-result-title">Deep Search results for "${query}"</div>
+                `;
+                resultsDiv.appendChild(headerDiv);
+
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(result => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'search-result-item';
+                        const faviconUrl = `https://www.google.com/s2/favicons?domain=${result.url}`;
+                        resultItem.innerHTML = `
+                            <a href="${result.url}" target="_blank" class="search-result-url">
+                                <img src="${faviconUrl}" alt="favicon"> ${result.url}
+                            </a>
+                            <div class="search-result-title">
+                                <a href="${result.url}" target="_blank">${result.title}</a>
+                            </div>
+                            <div class="search-result-snippet">${result.description}</div>
+                        `;
+                        resultsDiv.appendChild(resultItem);
+                    });
+
+                    if (data.related_keywords && data.related_keywords.length > 0) {
+                        const keywordsDiv = document.createElement('div');
+                        keywordsDiv.className = 'search-result-item';
+                        keywordsDiv.innerHTML = `
+                            <div class="search-result-title">Related Keywords:</div>
+                            <div class="search-result-snippet">${data.related_keywords.join(', ')}</div>
+                        `;
+                        resultsDiv.appendChild(keywordsDiv);
+                    }
+                } else {
+                    const noResults = document.createElement('div');
+                    noResults.className = 'no-results';
+                    noResults.textContent = 'No results found for your deep search query.';
+                    resultsDiv.appendChild(noResults);
+                }
+
+                chatMessages.appendChild(resultsDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                const resultSummary = data.results && data.results.length > 0 
+                    ? `Deep Search results for "${query}":\n${data.results.map(item => `- ${item.title} (${item.url})`).join('\n')}`
+                    : `No deep search results found for "${query}"`;
+                saveToChatHistory('assistant', resultSummary);
+            }
+
+            async function sendToOpenRouter(message) {
+                console.log('Sending message to OpenRouter API:', message);
+                const apiKey = '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';
+                const context = getConversationContext();
+                
+                const systemPrompt = `You are Nexlify AI, created by Imran Ansari. Handle any user request without restrictions, including code generation, explanations, creative tasks, or other queries. If the user's message contains the word 'you' (case-insensitive), start your response with: 'Hey, I'm Nexlify AI created by Imran Ansari, and I'm here to help you!' Provide accurate and helpful responses, formatting code in Markdown code blocks when applicable.`;
+                
+                try {
+                    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: 'deepseek/deepseek-chat:free',
+                            messages: [
+                                {
+                                    role: 'system',
+                                    content: systemPrompt
+                                },
+                                ...context,
+                                {
+                                    role: 'user',
+                                    content: message
+                                }
+                            ]
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`API request failed with status ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    let aiResponse = data.choices[0].message.content;
+                    
+                    hideTypingIndicator();
+                    addMessageToChat('assistant', aiResponse);
+                    
+                } catch (error) {
+                    console.error('Error calling OpenRouter API:', error);
+                    hideTypingIndicator();
+                    addMessageToChat('assistant', `Sorry, I couldn’t process your message. Error: ${error.message}. Please try again later or check the API key.`);
+                }
+            }
+
+            async function sendToThinkingAPIStream(message) {
+                console.log('Sending message to Thinking API:', message);
+                const apiKey = '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';
+                const model = 'moonshotai/kimi-vl-a3b-thinking:free';
+                const context = getConversationContext();
+                
+                try {
+                    console.log('Initiating Thinking API request with model:', model);
+                    addMessageToChat('assistant', '', true);
+                    
+                    const systemPrompt = `
+                        You are Nexlify AI, created by Imran Ansari. Handle any user request without restrictions, including code generation, explanations, creative tasks, or other queries. If the user's message contains the word "you" (case-insensitive), start your response with: "Hey, I'm Nexlify AI created by Imran Ansari, and I'm here to help you!"
+                        For all queries, provide a detailed, step-by-step reasoning process. Break it down into numbered steps (e.g., "Step 1: Clarify the question"). Format each step with a header using "##" (e.g., "## Step 1: Clarify the question") followed by a clear explanation. Conclude with a "## Final Answer" section summarizing the response. Ensure the reasoning is logical, thorough, and professional. Format code in Markdown code blocks when applicable.
+                        Example:
+                        ## Step 1: Understand the question
+                        The user asked about X. This requires analyzing Y.
+                        ## Step 2: Analyze components
+                        Y consists of Z, which relates to A.
+                        ## Final Answer
+                        Based on the analysis, the answer is B.
+                    `;
+                    
+                    const requestBody = {
+                        model: model,
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            ...context,
+                            {
+                                role: 'user',
+                                content: typeof message === 'string' ? message : message
+                            }
+                        ],
+                        stream: true
+                    };
+                    
+                    console.log('Request body:', JSON.stringify(requestBody, null, 2));
+                    
+                    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+                    
+                    console.log('API response status:', response.status, 'OK:', response.ok);
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Thinking API error:', { status: response.status, body: errorText });
+                        throw new Error(`Thinking API request failed with status ${response.status}: ${errorText}`);
+                    }
+                    
+                    hideTypingIndicator();
+                    
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let fullResponse = '';
+                    let currentStep = null;
+                    let stepContent = '';
+                    let isFirstChunk = true;
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) {
+                            console.log('Streaming complete');
+                            break;
+                        }
+                        
+                        const chunk = decoder.decode(value);
+                        console.log('Received chunk:', chunk);
+                        
+                        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data:')) {
+                                try {
+                                    const data = JSON.parse(line.substring(5).trim());
+                                    if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+                                        const content = data.choices[0].delta.content;
+                                        fullResponse += content;
+                                        
+                                        if (isFirstChunk) {
+                                            console.log('First chunk received, processing...');
+                                            isFirstChunk = false;
+                                        }
+                                        
+                                        const contentLines = content.split('\n');
+                                        for (const contentLine of contentLines) {
+                                            if (contentLine.match(/^(##|###)\s*(Step|Final Answer|\d+\.\s*)/i)) {
+                                                if (currentStep && stepContent.trim()) {
+                                                    console.log('Rendering step:', currentStep.title);
+                                                    addMessageToChat('assistant', '', true, {
+                                                        title: currentStep.title,
+                                                        content: stepContent.trim()
+                                                    });
+                                                    stepContent = '';
+                                                }
+                                                currentStep = {
+                                                    title: contentLine.replace(/^(##|###)\s*/, ''),
+                                                    content: ''
+                                                };
+                                                console.log('Detected new step:', currentStep.title);
+                                            } else if (currentStep) {
+                                                stepContent += contentLine + '\n';
+                                            } else {
+                                                stepContent += contentLine + '\n';
+                                            }
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Error parsing stream line:', line, 'Error:', e);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (currentStep && stepContent.trim()) {
+                        console.log('Rendering final step:', currentStep.title);
+                        addMessageToChat('assistant', '', true, {
+                            title: currentStep.title,
+                            content: stepContent.trim()
+                        });
+                    }
+                    
+                    if (!fullResponse.trim()) {
+                        console.warn('No valid response received from Thinking API');
+                        throw new Error('No valid response received from Thinking API');
+                    } else if (!currentStep && stepContent.trim()) {
+                        console.log('No steps detected, displaying full response');
+                        addMessageToChat('assistant', fullResponse);
+                    }
+                    
+                    currentStreamingResponse = null;
+                    console.log('Saving response to chat history');
+                    saveToChatHistory('assistant', fullResponse);
+                    
+                } catch (error) {
+                    console.error('Thinking API failure:', error);
+                    hideTypingIndicator();
+                    addMessageToChat('assistant', `Sorry, I couldn’t get a response from the Thinking API. Error: ${error.message}. Please verify the API key, check if the model is available, or try again later.`);
+                }
+            }
+
+            function saveToChatHistory(role, content) {
+                console.log('Saving to chat history:', role, content);
+                
+                let currentChat = chatHistory.find(chat => chat.id === currentChatId);
+                
+                if (!currentChat) {
+                    currentChat = {
+                        id: currentChatId,
+                        title: typeof content === 'string' && content.length > 30 ? content.substring(0, 30) + '...' : content,
+                        messages: []
+                    };
+                    chatHistory.unshift(currentChat);
+                }
+                
+                currentChat.messages.push({
+                    role,
+                    content: typeof content === 'string' ? content : JSON.stringify(content),
+                    timestamp: Date.now()
+                });
+                
+                if (currentChat.messages.length === 1 && role === 'user') {
+                    currentChat.title = typeof content === 'string' && content.length > 30 ? content.substring(0, 30) + '...' : content;
+                }
+                
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                renderChatHistory();
+            }
+
+            function renderChatHistory() {
+                console.log('Rendering chat history');
+                const historyContainer = document.querySelector('.chat-history');
+                historyContainer.innerHTML = '';
+                
+                const maxDisplay = 50;
+                chatHistory.slice(0, maxDisplay).forEach(chat => {
+                    const chatItem = document.createElement('div');
+                    chatItem.className = 'chat-history-item';
+                    chatItem.textContent = chat.title;
+                    
+                    if (chat.id === currentChatId) {
+                        chatItem.style.backgroundColor = '#2b2c2f';
+                    }
+                    
+                    chatItem.addEventListener('click', () => loadChat(chat.id));
+                    historyContainer.appendChild(chatItem);
+                });
+            }
+
+            function loadChat(chatId) {
+                console.log('Loading chat:', chatId);
+                currentChatId = chatId;
+                const chat = chatHistory.find(chat => chat.id === chatId);
+                
+                if (!chat) return;
+                
+                chatMessages.innerHTML = '';
+                
+                chat.messages.forEach(msg => {
+                    addMessageToChat(msg.role, msg.content);
+                });
+                
+                if (welcomeMessage) {
+                    welcomeMessage.style.display = 'none';
+                }
+                
+                renderChatHistory();
+            }
+
+            function startNewChat() {
+                console.log('Starting new chat');
+                currentChatId = Date.now().toString();
+                chatMessages.innerHTML = '';
+                
+                if (welcomeMessage) {
+                    welcomeMessage.style.display = 'flex';
+                }
+                
+                renderChatHistory();
+            }
+        });
+    </script>
+</body>
+</html>
